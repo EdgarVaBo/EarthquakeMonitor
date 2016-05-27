@@ -1,7 +1,6 @@
 package com.example.edgar.earthquakemonitor.adapter;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.edgar.earthquakemonitor.R;
 import com.example.edgar.earthquakemonitor.tools.Interfaces;
+import com.example.edgar.earthquakemonitor.tools.Tools;
 
 import java.util.ArrayList;
 
@@ -59,56 +59,12 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.Holder> {
         holder.magnitude.setText(mag);
         holder.place.setText(place);
 
-        int color = getColor(mag);
+        int color = Tools.getColor(mag);
 
         holder.color.setBackgroundColor(color);
 
     }
 
-    private int getColor(String mag) {
-
-        int n = (int) Double.parseDouble(mag);
-
-        String hexColor = "#";
-        switch (n) {
-            case 0:
-                hexColor += "00ff00";
-                break;
-            case 1:
-                hexColor += "1ce200";
-                break;
-            case 2:
-                hexColor += "38c600";
-                break;
-            case 3:
-                hexColor += "55aa00";
-                break;
-            case 4:
-                hexColor += "718d00";
-                break;
-            case 5:
-                hexColor += "807100";
-                break;
-            case 6:
-                hexColor += "aa5500";
-                break;
-            case 7:
-                hexColor += "c63800";
-                break;
-            case 8:
-                hexColor += "e21c00";
-                break;
-            case 9:
-                hexColor += "ff0000";
-                break;
-            default:
-                hexColor+="000000";
-                break;
-        }
-
-
-        return Color.parseColor(hexColor);
-    }
 
     @Override
     public int getItemCount() {

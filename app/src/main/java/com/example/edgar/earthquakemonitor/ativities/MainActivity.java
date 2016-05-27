@@ -1,13 +1,16 @@
 package com.example.edgar.earthquakemonitor.ativities;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.edgar.earthquakemonitor.R;
@@ -15,6 +18,16 @@ import com.example.edgar.earthquakemonitor.adapter.MainAdapter;
 import com.example.edgar.earthquakemonitor.tools.Download;
 import com.example.edgar.earthquakemonitor.tools.Interfaces;
 import com.example.edgar.earthquakemonitor.tools.Tools;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,10 +35,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 
-public class MainActivity extends Activity implements Interfaces.OnResponse, SwipeRefreshLayout.OnRefreshListener, Interfaces.OnItemClick, View.OnClickListener {
+public class MainActivity extends Activity implements Interfaces.OnResponse, SwipeRefreshLayout.OnRefreshListener, Interfaces.OnItemClick, View.OnClickListener, OnMapReadyCallback {
 
     private SwipeRefreshLayout srl;
     private static final String DATA_KEY = "DATA_KEY";
+    private GoogleMap gMap;
+    private ArrayList<Bundle> features;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +50,17 @@ public class MainActivity extends Activity implements Interfaces.OnResponse, Swi
 
         initViews();
         onRefresh();
+        initMap();
+    }
+
+    private void initMap() {
+
+
+        MapFragment mapFragment = MapFragment.newInstance();
+        mapFragment.getMapAsync(this);
+        getFragmentManager().beginTransaction().replace(R.id.map1, mapFragment).commit();
+
+
     }
 
 
@@ -47,6 +73,8 @@ public class MainActivity extends Activity implements Interfaces.OnResponse, Swi
         rv.setLayoutManager(mLayoutManager);
 
         findViewById(R.id.refresh).setOnClickListener(this);
+        findViewById(R.id.showMap).setOnClickListener(this);
+        findViewById(R.id.myLocation).setOnClickListener(this);
 
     }
 
@@ -75,15 +103,63 @@ public class MainActivity extends Activity implements Interfaces.OnResponse, Swi
         }
 
 
-        Log.i("", datos.toString());
+        Bundle metadata = datos.getBundle("metadata");
+        String title = metadata.getString("title", "");
 
-        ArrayList<Bundle> features = datos.getParcelableArrayList("features");
+        ((TextView) findViewById(R.id.tvHeaderTitle)).setText(title);
+
+        features = datos.getParcelableArrayList("features");
 
         MainAdapter adapter = new MainAdapter(this, this, 0, features);
         RecyclerView rv = (RecyclerView) findViewById(R.id.rv);
         rv.setAdapter(adapter);
         adapter.notifyDataSetChanged();
         srl.setRefreshing(false);
+
+
+    }
+
+    private void loadMarkers() {
+        if (gMap != null) {
+            Log.i("", "");
+
+            gMap.clear();
+            CameraUpdate mCameraUpdate;
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (Bundle item : features) {
+                Bundle geometri = item.getBundle("geometry");
+                ArrayList<Bundle> coordinates = geometri.getParcelableArrayList("coordinates");
+
+
+                Object lonObj = coordinates.get(0);
+                Object latObj = coordinates.get(1);
+
+                double lon = Double.parseDouble(lonObj.toString());
+                double lat = Double.parseDouble(latObj.toString());
+
+                LatLng latLng = new LatLng(lat, lon);
+
+                builder.include(latLng);
+
+                Bundle properties = item.getBundle("properties");
+                String mag = properties.get("mag").toString();
+
+
+                gMap.addMarker(new MarkerOptions().position(latLng).icon(getMarkerIcon(mag)));
+
+
+            }
+
+            LatLngBounds bounds = builder.build();
+            mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 80);
+            gMap.animateCamera(mCameraUpdate);
+        }
+    }
+
+    public BitmapDescriptor getMarkerIcon(String color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(Tools.getColor(color), hsv);
+        return BitmapDescriptorFactory.defaultMarker(hsv[0]);
     }
 
     @Override
@@ -139,12 +215,80 @@ public class MainActivity extends Activity implements Interfaces.OnResponse, Swi
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+
+            case R.id.myLocation:
+                loadMarkers();
+                break;
             case R.id.refresh:
 
                 if (!srl.isRefreshing()) {
                     onRefresh();
                 }
                 break;
+
+            case R.id.showMap:
+                if (findViewById(R.id.content).getVisibility() == View.GONE) {
+                    findViewById(R.id.content).animate()
+//                        .translationY(-findViewById(R.id.srl).getHeight())
+                            .alpha(1.0f).setListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            findViewById(R.id.content).setVisibility(View.VISIBLE);
+//
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            loadMarkers();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+                } else {
+
+                    findViewById(R.id.content).animate()
+//                        .translationY(-findViewById(R.id.srl).getHeight())
+                            .alpha(0.0f).setListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            findViewById(R.id.content).setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+
+                }
+
+
+                break;
+
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        gMap = googleMap;
     }
 }

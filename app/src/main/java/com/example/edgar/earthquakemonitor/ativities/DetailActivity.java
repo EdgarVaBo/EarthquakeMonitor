@@ -141,6 +141,7 @@ public class DetailActivity extends Activity implements View.OnClickListener, Sw
         String latitude = properties.getString("latitude", "");
         String longitude = properties.getString("longitude", "");
         String depth = properties.getString("depth", "");
+        String title = datos.getBundle("properties").getString("place","");
 
 
         ((TextView) findViewById(R.id.tvMagnitude)).setText(magnitude);
@@ -149,6 +150,8 @@ public class DetailActivity extends Activity implements View.OnClickListener, Sw
         ((TextView) findViewById(R.id.tvLatitude)).setText(latitude);
         ((TextView) findViewById(R.id.tvLongitude)).setText(longitude);
         ((TextView) findViewById(R.id.tvDepth)).setText(depth);
+        ((TextView) findViewById(R.id.tvHeaderTitle)).setText(title);
+
 
 
         if (gMap != null) {

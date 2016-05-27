@@ -3,6 +3,7 @@ package com.example.edgar.earthquakemonitor.tools;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -21,7 +22,6 @@ import java.util.TimeZone;
  * Created by Edgar Valeriano on 5/26/16.
  */
 public class Tools {
-
 
 
     public static Boolean checkInternetConnection(Context context) {
@@ -67,6 +67,8 @@ public class Tools {
                             bElements.add(bInnerData);
                         } else if (innerArray.get(j) instanceof String) {
                             sElements.add(innerArray.getString(j));
+                        } else {
+                            sElements.add(innerArray.get(j).toString());
                         }
                     }
 
@@ -192,4 +194,49 @@ public class Tools {
         return month;
     }
 
+
+    public static int getColor(String mag) {
+
+        int n = (int) Double.parseDouble(mag);
+
+        String hexColor = "#";
+        switch (n) {
+            case 0:
+                hexColor += "00ff00";
+                break;
+            case 1:
+                hexColor += "1ce200";
+                break;
+            case 2:
+                hexColor += "38c600";
+                break;
+            case 3:
+                hexColor += "55aa00";
+                break;
+            case 4:
+                hexColor += "718d00";
+                break;
+            case 5:
+                hexColor += "807100";
+                break;
+            case 6:
+                hexColor += "aa5500";
+                break;
+            case 7:
+                hexColor += "c63800";
+                break;
+            case 8:
+                hexColor += "e21c00";
+                break;
+            case 9:
+                hexColor += "ff0000";
+                break;
+            default:
+                hexColor+="000000";
+                break;
+        }
+
+
+        return Color.parseColor(hexColor);
+    }
 }
